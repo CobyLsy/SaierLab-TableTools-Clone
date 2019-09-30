@@ -3,6 +3,8 @@
 import os,sys
 import subprocess as sp
 from Bio import AlignIO
+from run_hmmtop import run_hmmtop
+
 
 '''
 ssearch36 -z 11 -k 1000 -s $subMatrix -E $evalue -W 0 -m 0  $qfile $sfile > $alnFile
@@ -17,7 +19,7 @@ def setup(outdir):
 
 
     #make a seqs folder for sequences
-
+    
     seqDir = '{}/seqs'.format(outdir)
 
     if not os.path.isdir(seqDir):
@@ -32,17 +34,28 @@ def setup(outdir):
 
         os.makedirs(alnDir)
 
-    return seqDir,alnDir
 
-def alignSeq(infile,outdir,outfile,seqDir,alnDir):
+    #make a directory for hmmtop output
 
-    #read infile
+    hmmDir = '{}/hmmtop'.format(outdir)
+
+    if not os.path.isdir(hmmDir):
+
+        os.makedirs(hmmDir)
+
+    
+    return seqDir,alnDir,hmmDir
+
+def alignSeq(infile,outdir,outfile,seqDir,alnDir,hmmDir):
+
+    #read infile 
     contents = open(infile,'r').readlines()[1:]
 
     #create outfile
-    out = open('{}/{}.tsv'.format(outdir,outfile),'w')
-    out.write('#query\tacc\ttcid\tevalue\tpident\tqcov\tscov\n')
+    out = open('{}/{}.tsv'.format(outdir,outfile),'w') 
+    out.write('#query\tq_tms\tacc\ts_tms\ttcid\tevalue\tpident\tqcov\tscov\n')
 
+    tms = {}
 
     for line in contents:
 
@@ -61,6 +74,7 @@ def alignSeq(infile,outdir,outfile,seqDir,alnDir):
         if not os.path.exists(querySeq):
 
             os.system('blastdbcmd -db nr -entry {} -target_only > {}'.format(query,querySeq))
+            tms[query] = run_hmmtop(querySeq,'{}/{}.out'.format(hmmDir,query))
 
         #check if version number in accesion
         if '.' in acc:
@@ -73,7 +87,7 @@ def alignSeq(infile,outdir,outfile,seqDir,alnDir):
         if not os.path.exists(tcSeq):
 
             os.system('blastdbcmd -db tcdb -entry {}-{} -target_only > {}'.format(tcid,acc,tcSeq))
-
+            tms[acc] = run_hmmtop(tcSeq,'{}/{}.out'.format(hmmDir,acc))
 
         #perform alignments
         aln = '{}/ssearch36_{}_vs_{}.aln'.format(alnDir,query,acc)
@@ -84,7 +98,7 @@ def alignSeq(infile,outdir,outfile,seqDir,alnDir):
 
 
         #try:
-
+        
             #print(aln)
 
         alignments = AlignIO.parse(open(aln),'fasta-m10')
@@ -95,17 +109,17 @@ def alignSeq(infile,outdir,outfile,seqDir,alnDir):
 
             evalue = alignment._annotations['sw_expect']
             pident = float(alignment._annotations['sw_ident'])*100
-
+            
             qcov,scov = [(int(x._al_stop)-int(x._al_start))/float(len(x.seq))for x in alignment]
 
-            out.write('{}\n'.format('\t'.join(map(str,[query,acc,tcid,evalue,pident,qcov,scov]))))
-
+            out.write('{}\n'.format('\t'.join(map(str,[query,tms[query],acc,tms[acc],tcid,evalue,pident,qcov,scov]))))
+           
         '''
         for record in alignment:
 
         print(record.seq)
         print(record._al_start,record._al_stop)
-
+                
         print('\n\n')
         '''
         #except Exception as e:
@@ -120,6 +134,6 @@ if __name__ == "__main__":
     outdir = sys.argv[2]
     outfile = sys.argv[3]
 
-    seqDir,alnDir = setup(outdir)
+    seqDir,alnDir,hmmDir = setup(outdir)
 
-    alignSeq(infile,outdir,outfile,seqDir,alnDir)
+    alignSeq(infile,outdir,outfile,seqDir,alnDir,hmmDir)
