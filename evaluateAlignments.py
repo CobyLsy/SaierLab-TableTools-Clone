@@ -17,7 +17,7 @@ def setup(outdir):
 
 
     #make a seqs folder for sequences
-    
+
     seqDir = '{}/seqs'.format(outdir)
 
     if not os.path.isdir(seqDir):
@@ -32,16 +32,15 @@ def setup(outdir):
 
         os.makedirs(alnDir)
 
-    
     return seqDir,alnDir
 
 def alignSeq(infile,outdir,outfile,seqDir,alnDir):
 
-    #read infile 
+    #read infile
     contents = open(infile,'r').readlines()[1:]
 
     #create outfile
-    out = open('{}/{}.tsv'.format(outdir,outfile),'w') 
+    out = open('{}/{}.tsv'.format(outdir,outfile),'w')
     out.write('#query\tacc\ttcid\tevalue\tpident\tqcov\tscov\n')
 
 
@@ -85,7 +84,7 @@ def alignSeq(infile,outdir,outfile,seqDir,alnDir):
 
 
         #try:
-        
+
             #print(aln)
 
         alignments = AlignIO.parse(open(aln),'fasta-m10')
@@ -96,17 +95,17 @@ def alignSeq(infile,outdir,outfile,seqDir,alnDir):
 
             evalue = alignment._annotations['sw_expect']
             pident = float(alignment._annotations['sw_ident'])*100
-            
+
             qcov,scov = [(int(x._al_stop)-int(x._al_start))/float(len(x.seq))for x in alignment]
 
             out.write('{}\n'.format('\t'.join(map(str,[query,acc,tcid,evalue,pident,qcov,scov]))))
-           
+
         '''
         for record in alignment:
 
         print(record.seq)
         print(record._al_start,record._al_stop)
-                
+
         print('\n\n')
         '''
         #except Exception as e:
