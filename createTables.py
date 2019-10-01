@@ -14,215 +14,214 @@ A small Script to take tsv files containing results form genome analysis project
 
 def readLines(file):
 
-	openFile = open(file,'r')
+    openFile = open(file,'r')
 
-	lines = openFile.readlines()
+    lines = openFile.readlines()
 
-	return lines[1:]
+    return lines[1:]
 
 def mapTCID(lines,tcids,accessions,tms):
 
-	tcidMap = {}
+    tcidMap = {}
 
-	for line in lines:
+    for line in lines:
 
-		line = line.rstrip()
+        line = line.rstrip()
 
-		fields = line.split('\t')
+        fields = line.split('\t')
 
-		acc = fields[2]
+        acc = fields[2]
         tms[acc] = fields[3]
-		
+        
         tcid = fields[4]
-		
+        
         query = [fields[0]]+fields[5:]
         tms[query[0]] = fields[1]
 
         tcids.add(tcid)
 
-		#Overall Data
-		if tcid not in accessions:
+        #Overall Data
+        if tcid not in accessions:
 
-			accessions[tcid] = []
+            accessions[tcid] = []
 
-		if acc not in accessions[tcid]:
+        if acc not in accessions[tcid]:
 
-			accessions[tcid].append(acc)
-
-
-
-		#Genome-specifc data
-		if tcid not in tcidMap:
-
-			tcidMap[tcid] = {}
+            accessions[tcid].append(acc)
 
 
-		if acc in tcidMap[tcid]:
+        #Genome-specifc data
+        if tcid not in tcidMap:
+
+            tcidMap[tcid] = {}
 
 
-			if float(query[1]) < float(tcidMap[tcid][acc][1]):
+        if acc in tcidMap[tcid]:
 
 
-				tcidMap[tcid][acc] = query
-
-		else:
+            if float(query[1]) < float(tcidMap[tcid][acc][1]):
 
 
-			tcidMap[tcid][acc] = query
+                tcidMap[tcid][acc] = query
+
+        else:
 
 
-	return tcidMap,tcids,accessions,tms
+            tcidMap[tcid][acc] = query
+
+
+    return tcidMap,tcids,accessions,tms
 
 
 def getTCID(line):
 
-	fields = line.split('\t')
+    fields = line.split('\t')
 
-	return fields[2]
+    return fields[2]
 
 def getSubstrate(tcid,substrate_data,ontology,classes):
 
-	data = []
+    data = []
 
-	if tcid in substrate_data:
+    if tcid in substrate_data:
 
-		for substrate in substrate_data[tcid]:
+        for substrate in substrate_data[tcid]:
 
-			print(substrate)
+            print(substrate)
 
-			id,name = substrate
+            id,name = substrate
 
-			cat = find_predecessor(ontology,id,classes=classes)
+            cat = find_predecessor(ontology,id,classes=classes)
 
-			for category in cat:
-				print(category)
+            for category in cat:
+                print(category)
 
-				data.append('{}({})-{}({})'.format(category[0],category[1],id,name))
+                data.append('{}({})-{}({})'.format(category[0],category[1],id,name))
 
-		return ', '.join(data)
+        return ', '.join(data)
 
-	return 'none'
+    return 'none'
 
 def getProtein(line):
 
-	fields = line.split('\t')
+    fields = line.split('\t')
 
-	return fields[0]
+    return fields[0]
 
 def addEntry(tcidMap,tcid,protein):
 
-	if tcid not in tcidMap:
+    if tcid not in tcidMap:
 
-		tcidMap[tcid] = []
+        tcidMap[tcid] = []
 
-	tcidMap[tcid].append(protein)
+    tcidMap[tcid].append(protein)
 
-	return tcidMap
+    return tcidMap
 
 
 def getGenomes(directory):
 
-	genomes = []
+    genomes = []
 
-	genomeFiles = {}
+    genomeFiles = {}
 
-	for file in os.listdir(directory):
+    for file in os.listdir(directory):
 
-		filePath = '{}/{}'.format(directory,file)
-		fileName = file.replace('.tsv','')
+        filePath = '{}/{}'.format(directory,file)
+        fileName = file.replace('.tsv','')
 
-		print(fileName)
+        print(fileName)
 
-		genomes.append(fileName)
+        genomes.append(fileName)
 
-		genomeFiles[fileName] = filePath
+        genomeFiles[fileName] = filePath
 
-	return genomes,genomeFiles
+    return genomes,genomeFiles
 
 def printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,classes,output):
 
-	outputFile = open(output,'w')
+    outputFile = open(output,'w')
 
     queryFields = '\t'.join(['query\tq_tms\tevalue\tpident\tqcov\tscov']*len(genomes))
 
-	outputFile.write('#TCID\tAcc\tSubstrate\thit_tms_no\t{}\t{}\n'.format('\t'.join(genomes),queryFields)
+    outputFile.write('#TCID\tAcc\tSubstrate\thit_tms_no\t{}\t{}\n'.format('\t'.join(genomes),queryFields))
 
 
-	for tcid in tcids:
+    for tcid in tcids:
 
 
-		for acc in accessions[tcid]:
+        for acc in accessions[tcid]:
 
-			hits = []
-			pos = []
-
-
-			for genome in genomes:
+            hits = []
+            pos = []
 
 
-				if tcid in tcidMaps[genome]:
+            for genome in genomes:
 
-					if acc in tcidMaps[genome][tcid]:
+
+                if tcid in tcidMaps[genome]:
+
+                    if acc in tcidMaps[genome][tcid]:
 
                         query = tcidMaps[genome][tcid][acc][0]
                         tms_no = tms[query]
                         values = tcidMaps[genome][tcid][acc][1:]
-                   
-						hits.append('\t'.join([query]+[tms_no]+values))
-						pos.append('+')
+                     
+                        hits.append('\t'.join([query]+[tms_no]+values))
+                        pos.append('+')
 
-					else:
+                    else:
 
-						hits.append('none\tnone\tnone')
-						pos.append('-')
-				else:
+                        hits.append('none\tnone\tnone')
+                        pos.append('-')
+                else:
 
-					hits.append('none\tnone\tnone')
-					pos.append('-')
+                    hits.append('none\tnone\tnone')
+                    pos.append('-')
 
-			substrateData = getSubstrate(tcid,substrate_data,ontology,classes)
-
-
-			print('{}\t{}\t{}\t{}\t{}\t{}\n'.format(tcid,acc,substrateData,tms[acc],'\t'.join(pos),'\t'.join(hits)))
+            substrateData = getSubstrate(tcid,substrate_data,ontology,classes)
 
 
+            print('{}\t{}\t{}\t{}\t{}\t{}\n'.format(tcid,acc,substrateData,tms[acc],'\t'.join(pos),'\t'.join(hits)))
 
-	outputFile.close()
+
+
+    outputFile.close()
 
 if __name__ == "__main__":
 
-	#Initialize tcids
-	tcids = set()
+    #Initialize tcids
+    tcids = set()
 
-	#initialize maps
-	tcidMaps = {}
-	substrates = {}
-	accessions = {}
+    #initialize maps
+    tcidMaps = {}
+    substrates = {}
+    accessions = {}
     tms = {}
 
 
-	directory = sys.argv[1]
-	output = sys.argv[2]
+    directory = sys.argv[1]
+    output = sys.argv[2]
 
-	genomes,genomeFiles = getGenomes(directory)
+    genomes,genomeFiles = getGenomes(directory)
 
 
-	#get substrate information
-	classes = set(['CHEBI:33696','CHEBI:33838','CHEBI:36976','CHEBI:23888','CHEBI:33281','CHEBI:18059','CHEBI:33229',
+    #get substrate information
+    classes = set(['CHEBI:33696','CHEBI:33838','CHEBI:36976','CHEBI:23888','CHEBI:33281','CHEBI:18059','CHEBI:33229',
                     'CHEBI:25696','CHEBI:33575','CHEBI:24834','CHEBI:25697','CHEBI:36915','CHEBI:33709','CHEBI:16670',
                     'CHEBI:26672','CHEBI:31432','CHEBI:35381','CHEBI:50699','CHEBI:18154','CHEBI:72813','CHEBI:88061',
                     'CHEBI:10545','CHEBI:25367','CHEBI:24403','CHEBI:23357','CHEBI:17627','CHEBI:83821','CHEBI:17237'])
 
-	substrate_data = get_substrate_data('http://www.tcdb.org/cgi-bin/substrates/getSubstrates.py')
-	ontology = build_ontology('./chebi.obo')
+    substrate_data = get_substrate_data('http://www.tcdb.org/cgi-bin/substrates/getSubstrates.py')
+    ontology = build_ontology('./chebi.obo')
 
 
-	for genome in genomes:
+    for genome in genomes:
 
-		lines = readLines(genomeFiles[genome])
+        lines = readLines(genomeFiles[genome])
 
-		tcidMaps[genome],tcids,accessions,tms = mapTCID(lines,tcids,accessions,tms)
+        tcidMaps[genome],tcids,accessions,tms = mapTCID(lines,tcids,accessions,tms)
 
-	tcids = sorted(list(tcids),key=lambda x: x.split('.'))
+    tcids = sorted(list(tcids),key=lambda x: x.split('.'))
 
-	printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,classes,output)
+    printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,classes,output)
