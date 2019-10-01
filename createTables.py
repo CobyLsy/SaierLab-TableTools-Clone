@@ -20,7 +20,7 @@ def readLines(file):
 
 	return lines[1:]
 
-def mapTCID(lines,tcids,accessions):
+def mapTCID(lines,tcids,accessions,tms):
 
 	tcidMap = {}
 
@@ -30,11 +30,15 @@ def mapTCID(lines,tcids,accessions):
 
 		fields = line.split('\t')
 
-		acc = fields[1]
-		tcid = fields[2]
-		query = [fields[0]]+fields[3:]
+		acc = fields[2]
+        tms[acc] = fields[3]
+		
+        tcid = fields[4]
+		
+        query = [fields[0]]+fields[5:]
+        tms[query[0]] = fields[1]
 
-		tcids.add(tcid)
+        tcids.add(tcid)
 
 		#Overall Data
 		if tcid not in accessions:
@@ -56,7 +60,7 @@ def mapTCID(lines,tcids,accessions):
 		if acc in tcidMap[tcid]:
 
 
-			if float(query[3]) < float(tcidMap[tcid][acc][1]):
+			if float(query[1]) < float(tcidMap[tcid][acc][1]):
 
 
 				tcidMap[tcid][acc] = query
@@ -67,7 +71,7 @@ def mapTCID(lines,tcids,accessions):
 			tcidMap[tcid][acc] = query
 
 
-	return tcidMap,tcids,accessions
+	return tcidMap,tcids,accessions,tms
 
 
 def getTCID(line):
@@ -135,11 +139,13 @@ def getGenomes(directory):
 
 	return genomes,genomeFiles
 
-def printTable(genomes,tcids,tcidMaps,accessions,substrate_data,ontology,classes,output):
+def printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,classes,output):
 
 	outputFile = open(output,'w')
 
-	outputFile.write('#TCID\tAcc\tSubstrate\thit_tms_no\tSMU\tSPN\tSPY\tSSA\tquery_tms_no\te_value\tquery_acc\tquery_tms_no\te_value\tquery_acc\tquery_tms_no\te_value\tquery_acc\tquery_tms_no\te_value\tquery_acc\n')
+    queryFields = '\t'.join(['query\tq_tms\tevalue\tpident\tqcov\tscov']*len(genomes))
+
+	outputFile.write('#TCID\tAcc\tSubstrate\thit_tms_no\t{}\t{}\n'.format('\t'.join(genomes),queryFields)
 
 
 	for tcid in tcids:
@@ -150,6 +156,7 @@ def printTable(genomes,tcids,tcidMaps,accessions,substrate_data,ontology,classes
 			hits = []
 			pos = []
 
+
 			for genome in genomes:
 
 
@@ -157,7 +164,11 @@ def printTable(genomes,tcids,tcidMaps,accessions,substrate_data,ontology,classes
 
 					if acc in tcidMaps[genome][tcid]:
 
-						hits.append('\t'.join(tcidMaps[genome][tcid][acc]))
+                        query = tcidMaps[genome][tcid][acc][0]
+                        tms_no = tms[query]
+                        values = tcidMaps[genome][tcid][acc][1:]
+                   
+						hits.append('\t'.join([query]+[tms_no]+values))
 						pos.append('+')
 
 					else:
@@ -172,7 +183,7 @@ def printTable(genomes,tcids,tcidMaps,accessions,substrate_data,ontology,classes
 			substrateData = getSubstrate(tcid,substrate_data,ontology,classes)
 
 
-			print('{}\t{}\t{}\t{}\t{}\n'.format(tcid,acc,substrateData,'\t'.join(pos),'\t'.join(hits)))
+			print('{}\t{}\t{}\t{}\t{}\t{}\n'.format(tcid,acc,substrateData,tms[acc],'\t'.join(pos),'\t'.join(hits)))
 
 
 
@@ -187,6 +198,7 @@ if __name__ == "__main__":
 	tcidMaps = {}
 	substrates = {}
 	accessions = {}
+    tms = {}
 
 
 	directory = sys.argv[1]
@@ -209,8 +221,8 @@ if __name__ == "__main__":
 
 		lines = readLines(genomeFiles[genome])
 
-		tcidMaps[genome],tcids,accessions = mapTCID(lines,tcids,accessions)
+		tcidMaps[genome],tcids,accessions,tms = mapTCID(lines,tcids,accessions,tms)
 
 	tcids = sorted(list(tcids),key=lambda x: x.split('.'))
 
-	printTable(genomes,tcids,tcidMaps,accessions,substrate_data,ontology,classes,output)
+	printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,classes,output)
