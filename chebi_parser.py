@@ -30,13 +30,16 @@ def find_predecessor(graph,id,classes = None):
     chebi_id = libchebipy.ChebiEntity(id)
     primary = chebi_id.get_parent_id()
 
-    print(primary)
 
     if primary == None:
 
         primary = id
 
-    print(primary)
+
+    if primary in classes:
+
+        return (get_substrate_name(primary),primary)
+
 
     pre = graph.successors(primary)
 
@@ -53,7 +56,10 @@ def find_predecessor(graph,id,classes = None):
 
                 return (get_substrate_name(x),x)
 
+    print(id,get_substrate_name(id),heiriarchy)
+
     return [(get_substrate_name(x),x) for x in heiriarchy]
+
 
 
 if __name__ == "__main__":
