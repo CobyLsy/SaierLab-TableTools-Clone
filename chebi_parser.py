@@ -21,86 +21,33 @@ def get_substrate_name(id):
 
     return id.get_name()
 
-
-'''
-Helper Function to Perform Search
-
-def search(graph,id,queue,classes):
-
-    while len(queue) != 0:
-
-        curr = queue.pop(0)
-
-        if curr in classes:
-
-            return (get_substrate_name(curr),curr)
-
-        chebi_id = libchebipy.ChebiEntity(curr)
-
-        for parent in chebi_id.get_outgoings():
-
-            print('Parent: ',parent,parent.get_type())
-
-            if parent.get_target
-
-            if parent.get_type() == 'is_a':
-'''
-
-
-'''
-Find the Predecessor
-'''
-'''
-def find_predecessor(graph,id,classes = None):
+def get_primary(id):
 
     chebi_id = libchebipy.ChebiEntity(id)
+
     primary = chebi_id.get_parent_id()
 
     if primary == None:
 
         primary = id
 
-    if primary in classes:
-
-        #print('EARLY EXIT')
-
-        return (get_substrate_name(primary),primary)
+    return primary
 
 
-    predecessor = [x for x in graph.successors(primary)]
-
-    while len(predecessor) != 0 :
-
-        pre = predecessor.pop(0)
-
-        if pre in classes:
-
-            return (get_substrate_name(pre),pre)
-
-        predecessor += [x for x in graph.successors(pre)]
-
-'''
 def find_predecessor(graph,id,classes = None):
 
     category = (None,None)
 
-    chebi_id = libchebipy.ChebiEntity(id)
-    primary = chebi_id.get_parent_id()
+    primary = get_primary(id)
 
-
-    if primary == None:
-
-        primary = id
 
 
     if primary in classes:
 
-        #print('EARLY EXIT')
-
         return (get_substrate_name(primary),primary)
 
 
-    #pre = [x for x in graph.successors(primary)]
+    pre = [x for x in graph.successors(primary)]
 
     #print('Function Call: ',id,get_substrate_name(id),pre)
 
@@ -111,13 +58,15 @@ def find_predecessor(graph,id,classes = None):
 
     while len(predecessor) != 0 :
 
+
         x = predecessor.pop(0)
 
         if x.get_type() == 'is_a':
 
-            target_id = x.get_target_chebi_id()
+            target_id = get_primary(x.get_target_chebi_id())
 
-            #print('{} {} {}'.format(get_substrate_name(id),x.get_type(),get_substrate_name(target_id)))
+
+            print('{} {} {} {}({})'.format(x,get_substrate_name(id),x.get_type(),get_substrate_name(target_id),target_id))
 
             if target_id in classes:
 
@@ -126,35 +75,6 @@ def find_predecessor(graph,id,classes = None):
             target_chebi = libchebipy.ChebiEntity(target_id)
 
             predecessor += target_chebi.get_outgoings()
-
-    '''
-    if classes != None:
-
-
-        for x in pre:
-
-
-            #print(x)
-
-            if x in classes:
-
-
-                return (get_substrate_name(x),x)
-
-
-
-            chebi_id = libchebipy.ChebiEntity(x)
-
-
-            for parent in chebi_id.get_outgoings():
-
-                print('Parent: ',parent,parent.get_type())
-
-                if parent.get_type() == 'is_a':
-
-
-                    return find_predecessor(graph,x,classes=classes)
-    '''
 
 
     return category
@@ -177,6 +97,8 @@ if __name__ == "__main__":
 
     graph = build_ontology(obopath)
     print(find_predecessor(graph,id,classes=classes))
+
+
 
 
     '''

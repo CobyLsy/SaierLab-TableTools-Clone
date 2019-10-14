@@ -20,7 +20,7 @@ def readLines(file):
 
     return lines[1:]
 
-def mapTCID(lines,tcids,accessions,tms):
+def mapTCID(lines,tcids,accessions,tms,genome,repeats):
 
     tcidMap = {}
 
@@ -32,9 +32,9 @@ def mapTCID(lines,tcids,accessions,tms):
 
         acc = fields[2]
         tms[acc] = fields[3]
-        
+
         tcid = fields[4]
-        
+
         query = [fields[0]]+fields[5:]
         tms[query[0]] = fields[1]
 
@@ -58,6 +58,10 @@ def mapTCID(lines,tcids,accessions,tms):
 
         if acc in tcidMap[tcid]:
 
+            if '{}:{}-{}'.format(genome,tcid,acc) not in repeats:
+
+                repeats.append('{}:{}-{}'.format(genome,tcid,acc))
+
 
             if float(query[1]) < float(tcidMap[tcid][acc][1]):
 
@@ -70,7 +74,7 @@ def mapTCID(lines,tcids,accessions,tms):
             tcidMap[tcid][acc] = query
 
 
-    return tcidMap,tcids,accessions,tms
+    return tcidMap,tcids,accessions,tms,repeats
 
 
 def getTCID(line):
@@ -87,16 +91,24 @@ def getSubstrate(tcid,substrate_data,ontology,classes):
 
         for substrate in substrate_data[tcid]:
 
-            print(substrate)
 
             id,name = substrate
 
+            #print(tcid,id,name)
+
             cat = find_predecessor(ontology,id,classes=classes)
 
-            for category in cat:
-                print(category)
+            #print(cat)
 
-                data.append('{}({})-{}({})'.format(category[0],category[1],id,name))
+            if cat != (None,None):
+
+                data.append('{}({})-{}({})'.format(cat[0],cat[1],name,id))
+
+            else:
+
+                data.append('{}({})'.format(name,id))
+
+        #print(data)
 
         return ', '.join(data)
 
@@ -138,9 +150,14 @@ def getGenomes(directory):
 
     return genomes,genomeFiles
 
-def printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,classes,output):
+def printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,classes,repeats,outdir,output):
 
-    outputFile = open(output,'w')
+    if not os.path.isdir(outdir):
+
+        os.mkdir(outdir)
+
+    outputFile = open('{}/{}'.format(outdir,output),'w')
+    repeatFile = open('{}/repeats.tsv'.format(outdir),'w')
 
     queryFields = '\t'.join(['query\tq_tms\tevalue\tpident\tqcov\tscov']*len(genomes))
 
@@ -166,27 +183,32 @@ def printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,cla
                         query = tcidMaps[genome][tcid][acc][0]
                         tms_no = tms[query]
                         values = tcidMaps[genome][tcid][acc][1:]
-                     
+
                         hits.append('\t'.join([query]+[tms_no]+values))
                         pos.append('+')
 
                     else:
 
-                        hits.append('none\tnone\tnone')
+                        hits.append('none\tnone\tnone\tnone\tnone\tnone')
                         pos.append('-')
                 else:
 
-                    hits.append('none\tnone\tnone')
+                    hits.append('none\tnone\tnone\tnone\tnone\tnone')
                     pos.append('-')
 
             substrateData = getSubstrate(tcid,substrate_data,ontology,classes)
 
 
-            print('{}\t{}\t{}\t{}\t{}\t{}\n'.format(tcid,acc,substrateData,tms[acc],'\t'.join(pos),'\t'.join(hits)))
-
+            outputFile.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(tcid,acc,substrateData,tms[acc],'\t'.join(pos),'\t'.join(hits)))
 
 
     outputFile.close()
+
+    for repeat in repeats:
+
+        repeatFile.write('{}\n'.format(repeat))
+
+    repeatFile.close()
 
 if __name__ == "__main__":
 
@@ -198,10 +220,12 @@ if __name__ == "__main__":
     substrates = {}
     accessions = {}
     tms = {}
+    repeats = []
 
 
     directory = sys.argv[1]
-    output = sys.argv[2]
+    outdir = sys.argv[2]
+    output = sys.argv[3]
 
     genomes,genomeFiles = getGenomes(directory)
 
@@ -210,7 +234,8 @@ if __name__ == "__main__":
     classes = set(['CHEBI:33696','CHEBI:33838','CHEBI:36976','CHEBI:23888','CHEBI:33281','CHEBI:18059','CHEBI:33229',
                     'CHEBI:25696','CHEBI:33575','CHEBI:24834','CHEBI:25697','CHEBI:36915','CHEBI:33709','CHEBI:16670',
                     'CHEBI:26672','CHEBI:31432','CHEBI:35381','CHEBI:50699','CHEBI:18154','CHEBI:72813','CHEBI:88061',
-                    'CHEBI:10545','CHEBI:25367','CHEBI:24403','CHEBI:23357','CHEBI:17627','CHEBI:83821','CHEBI:17237'])
+                    'CHEBI:10545','CHEBI:25367','CHEBI:24403','CHEBI:23357','CHEBI:17627','CHEBI:83821','CHEBI:17237',
+                    'CHEBI:24870'])
 
     substrate_data = get_substrate_data('http://www.tcdb.org/cgi-bin/substrates/getSubstrates.py')
     ontology = build_ontology('./chebi.obo')
@@ -220,8 +245,8 @@ if __name__ == "__main__":
 
         lines = readLines(genomeFiles[genome])
 
-        tcidMaps[genome],tcids,accessions,tms = mapTCID(lines,tcids,accessions,tms)
+        tcidMaps[genome],tcids,accessions,tms,repeats = mapTCID(lines,tcids,accessions,tms,genome,repeats)
 
     tcids = sorted(list(tcids),key=lambda x: x.split('.'))
 
-    printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,classes,output)
+    printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,classes,repeats,outdir,output)
