@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 
+import argparse
 import os,sys
 from decimal import Decimal
 from substrate import get_substrate_data
-from chebi_parser import build_ontology,find_predecessor
+from chebi_parser import ce_categorization,role_categorization
 
 
 '''
@@ -83,9 +84,10 @@ def getTCID(line):
 
     return fields[2]
 
-def getSubstrate(tcid,substrate_data,ontology,classes):
+def getSubstrate(tcid,substrate_data,primary_ce,secondary_ce,primary_role,secondary_role):
 
-    data = []
+    ce = []
+    role = []
 
     if tcid in substrate_data:
 
@@ -94,25 +96,34 @@ def getSubstrate(tcid,substrate_data,ontology,classes):
 
             id,name = substrate
 
-            #print(tcid,id,name)
 
-            cat = find_predecessor(ontology,id,classes=classes)
+            cat = ce_categorization(id,primary_ce=primary_ce,secondary_ce=secondary_ce)
 
-            #print(cat)
 
             if cat != (None,None):
 
-                data.append('{}({})-{}({})'.format(cat[0],cat[1],name,id))
+                ce.append('{}({})-{}({})'.format(cat[0],cat[1],name,id))
 
             else:
 
-                data.append('{}({})'.format(name,id))
+                ce.append('{}({})'.format(name,id))
 
-        #print(data)
 
-        return ', '.join(data)
+            r_cat = role_categorization(id,primary_role=primary_role,secondary_role=secondary_role)
 
-    return 'none'
+            if r_cat != (None,None):
+
+                role.append('{}({})-{}({})'.format(r_cat[0],r_cat[1],name,id))
+
+            else:
+
+                role.append('{}({})'.format(name,id))
+
+
+
+        return ', '.join(ce),', '.join(role)
+
+    return 'none','none'
 
 def getProtein(line):
 
@@ -150,7 +161,7 @@ def getGenomes(directory):
 
     return genomes,genomeFiles
 
-def printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,classes,repeats,outdir,output):
+def printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,primary_ce,secondary_ce,primary_role,secondary_role,repeats,outdir,output):
 
     if not os.path.isdir(outdir):
 
@@ -161,7 +172,7 @@ def printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,cla
 
     queryFields = '\t'.join(['query\tq_tms\tevalue\tpident\tqcov\tscov']*len(genomes))
 
-    outputFile.write('#TCID\tAcc\tSubstrate\thit_tms_no\t{}\t{}\n'.format('\t'.join(genomes),queryFields))
+    outputFile.write('#TCID\tAcc\tCE\tRole\thit_tms_no\t{}\t{}\n'.format('\t'.join(genomes),queryFields))
 
 
     for tcid in tcids:
@@ -196,10 +207,10 @@ def printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,cla
                     hits.append('none\tnone\tnone\tnone\tnone\tnone')
                     pos.append('-')
 
-            substrateData = getSubstrate(tcid,substrate_data,ontology,classes)
+            ce,role = getSubstrate(tcid,substrate_data,primary_ce,secondary_ce,primary_role,secondary_role)
 
 
-            outputFile.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(tcid,acc,substrateData,tms[acc],'\t'.join(pos),'\t'.join(hits)))
+            outputFile.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(tcid,acc,ce,role,tms[acc],'\t'.join(pos),'\t'.join(hits)))
 
 
     outputFile.close()
@@ -210,7 +221,27 @@ def printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,cla
 
     repeatFile.close()
 
+def parse_arguments():
+
+    parser = argparse.ArgumentParser(description="A command line tool to process proteom analysis tables")
+
+    parser.add_argument('-i', '--input_directory', action='store',
+                        help='The path to the directory containing all the tsv files containing analysis.')
+    parser.add_argument('-of', '--outfile', action='store',
+                        help='The name of the final file containing the master table.')
+    parser.add_argument('-od', '--outdir', action='store',
+                        help='The path to the directory where all the analysis files will be output.')
+
+    args = parser.parse_args()
+
+    if len(sys.argv) < 2:
+        parser.print_help()
+        sys.exit(0)
+
+    return args.input_directory, args.outdir, args.outfile
+
 if __name__ == "__main__":
+
 
     #Initialize tcids
     tcids = set()
@@ -222,23 +253,22 @@ if __name__ == "__main__":
     tms = {}
     repeats = []
 
-
-    directory = sys.argv[1]
-    outdir = sys.argv[2]
-    output = sys.argv[3]
+    directory, outdir, outfile = parse_arguments()
 
     genomes,genomeFiles = getGenomes(directory)
 
-
     #get substrate information
-    classes = set(['CHEBI:33696','CHEBI:33838','CHEBI:36976','CHEBI:23888','CHEBI:33281','CHEBI:18059','CHEBI:33229',
-                    'CHEBI:25696','CHEBI:33575','CHEBI:24834','CHEBI:25697','CHEBI:36915','CHEBI:33709','CHEBI:16670',
-                    'CHEBI:26672','CHEBI:31432','CHEBI:35381','CHEBI:50699','CHEBI:18154','CHEBI:72813','CHEBI:88061',
-                    'CHEBI:10545','CHEBI:25367','CHEBI:24403','CHEBI:23357','CHEBI:17627','CHEBI:83821','CHEBI:17237',
-                    'CHEBI:24870'])
+    primary_ce = set(['CHEBI:33696','CHEBI:33838','CHEBI:36976','CHEBI:18282','CHEBI:18059','CHEBI:22563',
+                    'CHEBI:36916','CHEBI:33575','CHEBI:16670','CHEBI:35381','CHEBI:50699','CHEBI:18154','CHEBI:72813'
+                    'CHEBI:88061','CHEBI:10545','CHEBI:25106'])
+
+    secondary_ce = set(['CHEBI:24870','CHEBI:25367','CHEBI:83821'])
+
+    primary_role = set(['CHEBI:33281','CHEBI:26672','CHEBI:31432','CHEBI:33229'])
+
+    secondary_role = set(['CHEBI:23888','CHEBI:25212','CHEBI:23357'])
 
     substrate_data = get_substrate_data('http://www.tcdb.org/cgi-bin/substrates/getSubstrates.py')
-    ontology = build_ontology('./chebi.obo')
 
 
     for genome in genomes:
@@ -249,4 +279,4 @@ if __name__ == "__main__":
 
     tcids = sorted(list(tcids),key=lambda x: x.split('.'))
 
-    printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,ontology,classes,repeats,outdir,output)
+    printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,primary_ce,secondary_ce,primary_role,secondary_role,repeats,outdir,output)
