@@ -25,20 +25,23 @@ Currently, there are some programs that need to be installed on the system in or
    ```
    usage: evaluateAlignments.py [-h] [-i INFILE] [-of OUTFILE] [-od OUTDIR]
 
-   A command line tool to process proteome analysis tables
+   A tool developed to standardize the alignment statistics used for comparative
+   proteomic analysis in the Saier Lab at UCSD. Currently, protein sequences are
+   acquired from BLAST databases using blastdbcmd and all alignments are
+   performed using ssearch36.
 
    optional arguments:
-     -h, --help            show this help message and exit
-     -i INFILE, --infile INFILE
-                           The path to the tsv file containing the results of a
-                           proteome analysis
+      -h, --help            show this help message and exit
+      -i INFILE, --infile INFILE
+                            The path to the tsv file containing the results of a
+                            proteome analysis
      -of OUTFILE, --outfile OUTFILE
-                           The name for the file containing alignment statistics
-                           (without the file extension), which will be place in
-                           the output directory. Default is results
+                            The name for the file containing alignment statistics
+                            (without the file extension), which will be place in
+                            the output directory. Default is results
      -od OUTDIR, --outdir OUTDIR
-                           The path to the directory where all the analysis files
-                           will be output. Default is ./output
+                            The path to the directory where all the analysis files
+                            will be output. Default is ./output
    ```
    The input format for the _infile_ (-i) is a tab-separated value (tsv) file with 3 columns in this order:
    | Query Accession | TCDB Protein Accession | TCDB ID |

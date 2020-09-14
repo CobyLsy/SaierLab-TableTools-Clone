@@ -77,7 +77,7 @@ def alignSeq(infile,outdir,outfile,seqDir,alnDir,hmmDir):
         the path to the directory where the hmmtop output will be stored
     """
     #read infile
-    contents = open(infile,'r').readlines()[1:]
+    contents = open(infile,'r').readlines()
 
     #create outfile
     out = open('{}/{}.tsv'.format(outdir,outfile),'w')
@@ -86,6 +86,9 @@ def alignSeq(infile,outdir,outfile,seqDir,alnDir,hmmDir):
     tms = {}
 
     for line in contents:
+
+        if line[0][0] == '#':
+            continue
 
         query,acc,tcid = line.rstrip().split('\t')
 
@@ -134,7 +137,12 @@ def parse_arguments():
     """
     Argument Parser for the CLI
     """
-    parser = argparse.ArgumentParser(description="A command line tool to process proteome analysis tables")
+
+    desc =''' A tool developed to standardize the alignment statistics used for comparative proteomic analysis
+    in the Saier Lab at UCSD. Currently, protein sequences are acquired from BLAST databases using
+    blastdbcmd and all alignments are performed using ssearch36.'''
+
+    parser = argparse.ArgumentParser(description=desc)
 
     parser.add_argument('-i', '--infile', action='store',
                         help='The path to the tsv file containing the results of a proteome analysis')
@@ -159,7 +167,9 @@ def parse_arguments():
     return args.infile, args.outdir, args.outfile
 
 if __name__ == "__main__":
-
+    """
+    Main function of the program
+    """
     infile, outdir, outfile = parse_arguments()
 
     seqDir, alnDir, hmmDir = setup(outdir)
