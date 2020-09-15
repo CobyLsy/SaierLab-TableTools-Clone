@@ -4,7 +4,7 @@ import sys
 import requests
 
 '''
-A script to parse the substrate data page
+A script to parse the TCDB substrate data page and return it as a dictionary.
 '''
 
 def open_page(url):

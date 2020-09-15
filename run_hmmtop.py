@@ -7,7 +7,6 @@ import re
 A small wrapper script to run hmmtop and return relevant information
 '''
 
-
 def run_hmmtop(infile,outfile):
 
     os.system('hmmtop -if={} -of={} 2> /dev/null'.format(infile,outfile))
