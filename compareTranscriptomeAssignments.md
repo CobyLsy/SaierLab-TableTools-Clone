@@ -1,11 +1,7 @@
 # Documentation for script : _compareTranscriptomeAssignments.py_
 
 ## Summary
-A program developed to aid in performing cross-transcriptome studies using the Transporter
-Classfication Database (TCDB). This program takes in multiple analysis files, previously
-processed by evaluateAlignments.py. It then creates a combined table that contains TCDB
-proteins and the most similar proteins (determined through the analysis) from each of
-the proteomes.
+A program developed to aid in performing cross-transcriptome studies using the Transporter Classfication Database (TCDB). This program takes in multiple analysis files, previously processed by evaluateAlignments.py. It then creates a combined table that contains TCDB proteins and the most similar proteins (determined through the analysis) from each of the proteomes, along with relevant alignment statistics as calculated by evaluateAlignments. Currently, the ChEBI classifications we have used are fixed, as determined by manual analysis in the past, but we will improve this functionality in a future version of this script.
 
 ## Contributors
 
