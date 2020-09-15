@@ -91,6 +91,36 @@ def find_role(id,classes=None):
     return role
 
 
+def ce_categorization(id,primary_ce=None,secondary_ce=None):
+    """
+    Find the chemical entity classification ,if possible.
+    """
+    ce = None
+    ce = find_predecessor(id,classes=primary_ce)
+
+    if ce == (None,None):
+        if secondary_ce:
+
+            ce = find_predecessor(id,classes=secondary_ce)
+
+    return ce
+
+
+def role_categorization(id,primary_role=None,secondary_role=None):
+    """
+    Find the role classification ,if possible.
+    """
+    role = None
+    role = find_role(id,classes=primary_role)
+
+    if role == (None,None):
+        if secondary_role:
+
+            role = find_role(id,classes=secondary_role)
+
+    return role
+
+
 if __name__ == "__main__":
 
     id = sys.argv[1]
