@@ -1,7 +1,7 @@
 # Documentation for script : _evaluateAlignments.py_
 
 ## Summary
-This program is intended to standardize the approach for determining the alignment statistics for proteome analysis projects. During proteome analysis, many different methodologies are used to assist in identifying potential transport proteins. In an effort to be able to extend potential homologous relationships to other proteomes, we use _ssearch36_ for all alignments so that all alignment statistics are calculated with the same parameters.
+This program is intended to standardize the approach for determining the alignment statistics for proteome analysis projects. During proteome analysis, many different methodologies are used to assist in identifying potential transport proteins. In an effort to be able to extend potential homologous relationships to other proteomes, we use _ssearch36_ for all alignments so that all alignment statistics are calculated with the same parameters. We also, for additional information, run _hmmtop_, to calculate the predicted number of TransMembrane Segments (TMS) in all proteins in the analysis. As input, we expect a tsv file with the columns in the following order: the query accession (the NCBI accession of the protein that has been flagged to be potentially homologous to a TCDB protein), the accession of the TCDB protein that the query accession has been flagged to be similar to, and the corresponding TCID. As output, you will receive these fields, plus the percent identity of the alignment, the query coverage, and the subject coverage of the alignments.
 
 ## Contributors
 
