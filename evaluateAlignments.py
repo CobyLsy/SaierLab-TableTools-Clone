@@ -133,7 +133,7 @@ def alignSeq(infile, outdir, outfile, seqDir, alnDir, hmmDir, tcdb_db, query_db)
     out.close()
 
 
-def parse_arguments()
+def parse_arguments():
     """
     Argument Parser for the CLI
     """
