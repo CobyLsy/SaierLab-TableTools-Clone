@@ -56,7 +56,7 @@ def setup(outdir):
     return seqDir,alnDir,hmmDir
 
 
-def alignSeq(infile,outdir,outfile,seqDir,alnDir,hmmDir):
+def alignSeq(infile, outdir, outfile, seqDir, alnDir, hmmDir, tcdb_db, query_db):
     """
     Collects sequences for relevant proteins from input file and performs alignments and
     TransMembrane Sequence (TMS) prediction
@@ -100,7 +100,7 @@ def alignSeq(infile,outdir,outfile,seqDir,alnDir,hmmDir):
         querySeq = '{}/{}.faa'.format(seqDir,query)
 
         if not os.path.exists(querySeq):
-            os.system('blastdbcmd -db nr -entry {} -target_only > {}'.format(query,querySeq))
+            os.system('blastdbcmd -db {} -entry {} -target_only > {}'.format(query_db,query,querySeq))
             tms[query] = run_hmmtop(querySeq,'{}/{}.out'.format(hmmDir,query))
 
         #check if version number in accesion
@@ -111,7 +111,7 @@ def alignSeq(infile,outdir,outfile,seqDir,alnDir,hmmDir):
         tcSeq = '{}/{}.faa'.format(seqDir,acc)
 
         if not os.path.exists(tcSeq):
-            os.system('blastdbcmd -db tcdb -entry {}-{} -target_only > {}'.format(tcid,acc,tcSeq))
+            os.system('blastdbcmd -db {} -entry {}-{} -target_only > {}'.format(tcdb_db,tcid,acc,tcSeq))
             tms[acc] = run_hmmtop(tcSeq,'{}/{}.out'.format(hmmDir,acc))
 
         #perform alignments
@@ -133,7 +133,7 @@ def alignSeq(infile,outdir,outfile,seqDir,alnDir,hmmDir):
     out.close()
 
 
-def parse_arguments():
+def parse_arguments()
     """
     Argument Parser for the CLI
     """
@@ -151,6 +151,10 @@ def parse_arguments():
                         'which will be place in the output directory. Default is results')
     parser.add_argument('-od', '--outdir', action='store', default='./output',
                         help='The path to the directory where all the analysis files will be output. Default is ./output')
+    parser.add_argument('-tc', '--tcdb_db', action='store', default='tcdb',
+                        help='The path to the tcdb blastdb. By default, the value is tcdb')
+    parser.add_argument('-q', '--query_db', action='store', default='nr',
+                        help='The path to the blastdb for the query proteome. By default, the value is nr')
 
     args = parser.parse_args()
 
@@ -164,14 +168,14 @@ def parse_arguments():
         parser.print_help()
         sys.exit(0)
 
-    return args.infile, args.outdir, args.outfile
+    return args.infile, args.outdir, args.outfile, args.tcdb_db, args.query_db
 
 if __name__ == "__main__":
     """
     Main function of the program
     """
-    infile, outdir, outfile = parse_arguments()
+    infile, outdir, outfile, tcdb_db, query_db = parse_arguments()
 
     seqDir, alnDir, hmmDir = setup(outdir)
 
-    alignSeq(infile, outdir, outfile, seqDir, alnDir, hmmDir)
+    alignSeq(infile, outdir, outfile, seqDir, alnDir, hmmDir, tcdb_db, query_db)
