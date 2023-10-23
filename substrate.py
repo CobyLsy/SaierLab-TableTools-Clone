@@ -51,6 +51,6 @@ def get_substrate_data(url):
 
 if __name__ == "__main__":
 
-    url = 'http://www.tcdb.org/cgi-bin/substrates/getSubstrates.py'
+    url = 'https://tcdb.org/cgi-bin/substrates/getSubstrates.py'
 
     get_substrate_data(url)
