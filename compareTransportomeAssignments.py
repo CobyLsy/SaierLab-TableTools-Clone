@@ -281,4 +281,4 @@ if __name__ == "__main__":
 
     tcids = sorted(list(tcids),key=lambda x: x.split('.'))
 
-    printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,primary_ce,secondary_ce,primary_role,secondary_role,repeats,outdir,output)
+    printTable(genomes,tcids,tcidMaps,accessions,tms,substrate_data,primary_ce,secondary_ce,primary_role,secondary_role,repeats,outdir,outfile)
