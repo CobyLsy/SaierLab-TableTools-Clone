@@ -270,7 +270,7 @@ if __name__ == "__main__":
 
     secondary_role = set(['CHEBI:23888','CHEBI:25212','CHEBI:23357'])
 
-    substrate_data = get_substrate_data('http://www.tcdb.org/cgi-bin/substrates/getSubstrates.py')
+    substrate_data = get_substrate_data('https://tcdb.org/cgi-bin/substrates/getSubstrates.py')
 
 
     for genome in genomes:
